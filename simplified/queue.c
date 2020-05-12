@@ -5,6 +5,7 @@ struct queue {
   size_t W;
   size_t R;
   size_t N;
+//implicitly M=1
   size_t K;
 };
 
@@ -50,7 +51,7 @@ lemma void deq_lemma<t>(int k, int i, list<t> xs, list<t> ys, t z);
   requires 0 < k && k <= length(xs) && i < length(xs) && take(k, rotate_left(i, xs)) == ys && z == head(ys);
   ensures take(k-1, rotate_left((i+1)%length(xs), xs)) == tail(ys);
 
-lemma void deq_value_lemma<t>(int k, int i, list<char> xs, list<char> ys);
+lemma void deq_value_lemma<t>(int k, int i, list<t> xs, list<t> ys);
   requires 0 < k && k <= length(ys) && take(k, rotate_left(i, xs)) == ys;
   ensures nth(i, xs) == head(ys);
 
