@@ -39,7 +39,7 @@ lemma void mod_plus_distr(int x, int y, int n);
   ensures ((x % n) + y) % n == (x + y) % n;
 
 lemma_auto void mod_range(int x, int n);
-  requires 0 < n;
+  requires 0 <= x && 0 < n;
   ensures 0 <= (x % n) && (x % n) < n;
   
 lemma void mod_in_range(int x, int n);
