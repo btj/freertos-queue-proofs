@@ -55,7 +55,7 @@ lemma void deq_value_lemma<t>(int k, int i, list<t> xs, list<t> ys);
   requires 0 < k && k <= length(ys) && take(k, rotate_left(i, xs)) == ys;
   ensures nth(i, xs) == head(ys);
 
-predicate queue(struct queue *q, size_t W, size_t R, size_t N, size_t K, list<char> abs) =
+predicate queue(struct queue *q, size_t W, size_t R, size_t N, size_t K; list<char> abs) =
   malloc_block_queue(q) &*&
   q->buffer |-> ?buffer &*&
   q->W |-> W &*&
@@ -68,7 +68,7 @@ predicate queue(struct queue *q, size_t W, size_t R, size_t N, size_t K, list<ch
   0 <= K &*& K <= N &*&
   W == (R + 1 + K) % N &*&
   chars(buffer, N, ?contents) &*&
-  take(K, rotate_left((R+1)%N, contents)) == abs &*&
+  abs == take(K, rotate_left((R+1)%N, contents)) &*&
   malloc_block(buffer, N);
 @*/
 
@@ -84,7 +84,6 @@ struct queue *create_queue(size_t N)
   q->R = (N-1);
   q->N = N;
   q->K = 0;
-  //@close queue(q, 0, (N-1), N, 0, nil);
   return q;
 }
 
@@ -95,9 +94,7 @@ bool deq(struct queue *q, char *x)
         (result ? queue(q, W, (R+1)%N, N, (K-1), tail(abs)) : queue(q, W, R, N, K, abs)) &*&
         character(x, ?xnew) &*& xnew == (result ? head(abs) : xold); @*/
 {
-  //@open queue(q, W, R, N, K, abs);
   if (q->K == 0) {
-    //@close queue(q, W, R, N, K, abs);
     return false;
   }
   //@assert q->buffer |-> ?buffer;
@@ -111,7 +108,6 @@ bool deq(struct queue *q, char *x)
   //@take_length_eq(K, rotate_left((R+1)%N, contents), abs);
   //@assert abs == cons(?z, _);
   //@deq_lemma(K, (R+1)%N, contents, abs, z);
-  //@close queue(q, W, (R+1)%N, N, (K-1), tail(abs));
   //@deq_value_lemma(K, (R+1)%N, contents, abs);
   return true;
 }
@@ -120,9 +116,7 @@ bool enq(struct queue *q, char x)
   //@ requires queue(q, ?W, ?R, ?N, ?K, ?abs);
   //@ ensures result != (K == N) &*& result ? queue(q, (W+1)%N, R, N, (K+1), append(abs, cons(x, nil))) : queue(q, W, R, N, K, abs);
 {
-  //@open queue(q, W, R, N, K, abs);
   if (q->K == q->N) {
-    //@close queue(q, W, R, N, K, abs);
     return false;
   }
   //@assert q->buffer |-> ?buffer;
@@ -138,7 +132,6 @@ bool enq(struct queue *q, char x)
   //@assert W == (R + 1 + K) % N;
   //@mod_plus_one(W, R + 1 + K, N);
   //@assert((W+1)%N == ((R + 1) + (K + 1)) % N);
-  //@close queue(q, (W+1)%N, R, N, (K+1), append(abs, cons(x, nil)));
   return true;
 }
 
