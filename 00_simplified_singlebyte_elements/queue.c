@@ -103,11 +103,9 @@ bool deq(struct queue *q, char *x)
   *x = q->buffer[q->R];
   q->K--;
   //@mod_plus_distr(R+1, K, N);
-  //@assert 0 < K && K <= N;
   //@length_take(K, contents);
   //@take_length_eq(K, rotate_left((R+1)%N, contents), abs);
-  //@assert abs == cons(?z, _);
-  //@deq_lemma(K, (R+1)%N, contents, abs, z);
+  //@deq_lemma(K, (R+1)%N, contents, abs, head(abs));
   //@deq_value_lemma(K, (R+1)%N, contents, abs);
   return true;
 }
@@ -121,17 +119,12 @@ bool enq(struct queue *q, char x)
   }
   //@assert q->buffer |-> ?buffer;
   //@assert chars(buffer, N, ?contents);
-  //@assert take(K, rotate_left((R+1)%N, contents)) == abs;
   q->buffer[q->W] = x;
   q->W = (q->W + 1) % q->N;
-  //@assert q->W == (W + 1)%N;
   q->K++;
   //@enq_lemma(K, (R+1)%N, contents, abs, x);
   //@mod_plus_distr(R+1, K, N);
-  //@assert(take(K+1, rotate_left((R+1)%N, update(W, x, contents))) == append(abs, cons(x, nil)));
-  //@assert W == (R + 1 + K) % N;
   //@mod_plus_one(W, R + 1 + K, N);
-  //@assert((W+1)%N == ((R + 1) + (K + 1)) % N);
   return true;
 }
 
