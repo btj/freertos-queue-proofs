@@ -73,19 +73,19 @@ lemma void combine_list_update<t>(list<t>prefix, t x, list<t>suffix, size_t i, l
 lemma void buffer_from_chars(char *buffer, size_t N, size_t M);
   requires chars(buffer, N*M, ?abs);
   ensures exists<list<list<char> > >(?elements) &*& buffer(buffer, N, M, elements) &*& length(elements) == N;
-
+  
 lemma void split_element<t>(char *buffer, size_t N, size_t M, size_t i);
   requires buffer(buffer, N, M, ?elements) &*& i < N;
   ensures
-    buffer(buffer,               i * M,       M, take(i, elements)) &*&
-    chars( buffer + i * M,       M,              nth(i, elements)) &*&
-    buffer(buffer + (i + 1) * M, (N-1-i) * M, M, drop(i+1, elements));
+    buffer(buffer, i, M, take(i, elements)) &*&
+    chars(buffer + i * M, M, nth(i, elements)) &*&
+    buffer(buffer + (i + 1) * M, (N-1-i), M, drop(i+1, elements));
     
 lemma void join_element(char *buffer, size_t N, size_t M, size_t i);
   requires
-    buffer(buffer,               i * M,       M, ?prefix) &*&
-    chars( buffer + i * M,       M,              ?element) &*&
-    buffer(buffer + (i + 1) * M, (N-1-i) * M, M, ?suffix);
+    buffer(buffer, i, M, ?prefix) &*&
+    chars(buffer + i * M, M, ?element) &*&
+    buffer(buffer + (i + 1) * M, (N-1-i), M, ?suffix);
   ensures buffer(buffer, N, M, append(prefix, cons(element, suffix)));
 
 predicate queue(struct queue *q, size_t W, size_t R, size_t N, size_t M, size_t K, list<list<char> > abs) =
@@ -144,9 +144,9 @@ bool deq(struct queue *q, char *x)
   //@assert buffer(buffer, N, M, ?contents);
   q->R = (q->R + 1) % q->N;
   //@split_element(buffer, N, M, (R+1)%N);
-  //@assert buffer(buffer                , (R+1)%N * M, M, ?prefix);
-  //@assert chars( buffer + ((R+1)%N) * M, M, ?element);
-  //@assert buffer(buffer + ((R+1)%N + 1) * M, (N-1-(R+1)%N) * M, M, ?suffix);
+  //@assert buffer(buffer, (R+1)%N, M, ?prefix);
+  //@assert chars(buffer + ((R+1)%N) * M, M, ?element);
+  //@assert buffer(buffer + ((R+1)%N + 1) * M, (N-1-(R+1)%N), M, ?suffix);
   memcpy(x, q->buffer + (q->R * q->M), q->M);
   q->K--;
   //@combine_list_no_change(prefix, element, suffix, (R+1)%N, contents);
@@ -182,9 +182,9 @@ bool enq(struct queue *q, char *x)
   //@assert buffer(buffer, N, M, ?contents);
   //@assert take(K, rotate_left((R+1)%N, contents)) == abs;
   //@split_element(buffer, N, M, W);
-  //@assert buffer(buffer                , W * M, M, ?prefix);
+  //@assert buffer(buffer, W, M, ?prefix);
   //@assert chars( buffer + (W * M), M, ?element);
-  //@assert buffer(buffer + (W + 1) * M, (N-1-W) * M, M, ?suffix);
+  //@assert buffer(buffer + (W + 1) * M, (N-1-W), M, ?suffix);
   memcpy(q->buffer + (q->W * q->M), x, q->M);
   q->W = (q->W + 1) % q->N;
   //@assert q->W == (W + 1)%N;
