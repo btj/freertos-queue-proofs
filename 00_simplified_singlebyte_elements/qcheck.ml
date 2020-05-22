@@ -27,6 +27,14 @@ let test_enq = QCheck.Test.make ~count:1000 ~name:"enq"
 
 QCheck.Test.check_exn test_enq
 
+let test_enq_front = QCheck.Test.make ~count:1000 ~name:"enq_front"
+  (QCheck.quad (QCheck.list QCheck.small_nat) QCheck.small_nat QCheck.small_nat QCheck.small_nat)
+  (fun (xs, k, i, z) ->
+    let n = length xs in
+    QCheck.assume (0 <= k && k < n); QCheck.assume (0 <= i && i < n);
+    let ys = take k (rotate ((i+1) mod n) xs) in
+    take (k+1) (rotate i (update i z xs)) = z :: ys);;
+
 let test_deq = QCheck.Test.make ~count:1000 ~name:"deq"
   (QCheck.triple (QCheck.list QCheck.small_nat) QCheck.small_nat QCheck.small_nat)
   (fun (xs, k, i) ->
