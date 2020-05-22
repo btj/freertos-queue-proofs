@@ -15,7 +15,6 @@ fixpoint list<t> rotate_left<t>(int n, list<t> xs) {
   return append(drop(n, xs), take(n, xs));
 }
 
-// Simple lemmas can be proven by Verifast directly
 lemma_auto void rotate_length<t>(int n, list<t> xs)
   requires 0 <= n && n <= length(xs);
   ensures length(rotate_left(n, xs)) == length(xs);
@@ -26,7 +25,6 @@ lemma void take_length_eq<t>(int k, list<t> xs, list<t> ys)
   ensures length(ys) == k;
 {}
 
-// Following lemmas (unproven in Verifast) are straightforward identities for mod
 lemma_auto void mod_same(int n)
   requires 0 < n;
   ensures n % n == 0;
@@ -217,7 +215,18 @@ lemma void take_take<t>(int m, int n, list<t> xs)
   }
 }
 
-// !!!Following lemmas are unproven in Verifast. We prove them separately in Coq!!!
+lemma void mod_in_range(int x, int n);
+  requires 0 < n && 0 <= x && x < n;
+  ensures ((x % n) == x);
+
+lemma_auto void mod_mod(int x, int n);
+  requires true;
+  ensures (x % n) % n == (x % n);
+
+lemma void mod_plus(int x, int y, int n);
+  requires true;
+  ensures (x + y) % n == ((x % n) + (y % n)) % n;
+
 lemma void enq_lemma<t>(int k, int i, list<t> xs, list<t> ys, t z)
   requires 0 <= k && 0 <= i && 0 < length(xs) && k < length(xs) && i < length(xs) && take(k, rotate_left(i, xs)) == ys;
   ensures take(k+1, rotate_left(i, update((i+k)%length(xs), z, xs))) == append(ys, cons(z, nil));
@@ -283,6 +292,11 @@ lemma void enq_lemma<t>(int k, int i, list<t> xs, list<t> ys, t z)
          append(take(k, append(drop(i, xs), take(i, xs))), {z});
   assert take(k+1, append(drop(i, update(j, z, xs)), take(i, update(j, z, xs)))) == append(ys, {z});
 }
+
+// Following lemma (unproven in Verifast)
+lemma void front_enq_lemma<t>(int k, int i, list<t> xs, list<t> ys, t z);
+  requires 0 < length(xs) && k < length(xs) && i < length(xs) && take(k, rotate_left((i+1)%length(xs), xs)) == ys;
+  ensures take(k+1, rotate_left(i, update(i, z, xs))) == cons(z, ys);
 
 lemma void deq_lemma<t>(int k, int i, list<t> xs, list<t> ys, t z)
   requires 0 < k && k <= length(xs) && 0 <= i && i < length(xs) && take(k, rotate_left(i, xs)) == ys && z == head(ys);
@@ -383,6 +397,34 @@ bool deq(struct queue *q, char *x)
   return true;
 }
 
+bool enq_to_front(struct queue *q, char x)
+  //@ requires queue(q, ?W, ?R, ?N, ?K, ?abs);
+  //@ ensures result != (K == N) &*& result ? queue(q, W, (R == 0 ? (N-1) : (R-1)), N, (K+1), cons(x, abs)) : queue(q, W, R, N, K, abs);
+{
+  if (q->K == q->N) {
+    return false;
+  }
+  //@assert q->buffer |-> ?buffer;
+  //@assert chars(buffer, N, ?contents);
+  //@assert W == (R + 1 + K) % N;
+  q->buffer[q->R] = x;
+  q->R = (q->R == 0 ? (q->N - 1) : (q->R - 1));
+  //@if (0 < R)  { assert q->R == (R-1); assert W == ((R - 1) + 1 + (K + 1)) % N; }
+  /*@if (0 == R) { assert q->R == (N-1); mod_plus((N-1) + 1, K + 1, N); }
+  @*/
+  //@assert W == ((R == 0 ? (N-1) : (R-1)) +1 + (K+1)) % N;
+  q->K++;
+  //@front_enq_lemma(K, R, contents, abs, x);
+  /*@if (0 < R)  {
+      assert cons(x,abs) == take(K+1, rotate_left(R, update(R, x, contents)));
+      mod_in_range(R, N);
+      assert ((R-1) + 1) % N == R;
+    } @*/
+  //@if (0 == R) { assert cons(x,abs) == take(K+1, rotate_left(0, update(0, x, contents))); }
+  //@close queue(q, W, (R == 0 ? (N-1) : (R-1)), N, (K+1), cons(x, abs));
+  return true;
+}
+
 bool enq(struct queue *q, char x)
   //@ requires queue(q, ?W, ?R, ?N, ?K, ?abs);
   //@ ensures result != (K == N) &*& result ? queue(q, (W+1)%N, R, N, (K+1), append(abs, cons(x, nil))) : queue(q, W, R, N, K, abs);
@@ -422,6 +464,13 @@ int main()
   //@assert character(c, 'a');
   result = deq(q, c); assert result;
   //@assert queue(q, /*W*/3, /*R*/1, /*N*/8, /*K*/1, /*abs*/cons('c', nil));
+
+  result = enq_to_front(q, 'd'); assert result;
+  //@assert queue(q, /*W*/3, /*R*/0, /*N*/8, /*K*/2, /*abs*/cons('d', cons('c', nil)));
+  result = deq(q, c); assert result;
+  //@assert queue(q, /*W*/3, /*R*/_, /*N*/8, /*K*/1, /*abs*/cons('c', nil));
+  //@assert character(c, 'd');
+
   return 0;
   //@leak queue(q, _, _, _, _, _);
   //@leak malloc_block(c, _);
